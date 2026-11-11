@@ -103,4 +103,17 @@
   <string name="SecretMessageTecno">Телефоны от Tecno - лучшие.</string>
   <string name="SecretMessageXiaomiSuccess">У тебя хороший телефон.</string>
   <string name="SecretMessageXiaomiFailure">Установи кастомную прошивку.</string>
+
+  <string name="SmartProxyHeader">Умный прокси</string>
+  <string name="SmartProxyVpn">Отключать при активном VPN</string>
+  <string name="SmartProxyWifi">Отключать в сетях Wi-Fi</string>
+  <string name="SmartProxyWifiSsids">Доверенные сети Wi-Fi</string>
+  <string name="SmartProxyWifiNotSet">Не настроено</string>
+  <string name="SmartProxyWifiSsidsHint">Укажите названия сетей Wi-Fi (SSID) через запятую.</string>
+  <string name="SmartProxyWifiAddCurrent">+ Добавить текущую сеть (%1$s)</string>
+  <string name="SmartProxyInfo">Умный прокси автоматически отключает прокси в Telegram, когда вы подключены к доверенным Wi-Fi сетям (например, домашней сети с настроенным VPN) или когда на устройстве активен системный VPN.</string>
+  <string name="SmartProxyStatusActive">Статус: Прокси активен</string>
+  <string name="SmartProxyStatusBypassed">Статус: Приостановлен (%1$s)</string>
+  <string name="SmartProxyBypassedVpn">активен VPN</string>
+  <string name="SmartProxyBypassedWifi">Wi-Fi: %1$s</string>
 </resources>

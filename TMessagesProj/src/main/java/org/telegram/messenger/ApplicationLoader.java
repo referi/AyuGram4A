@@ -301,6 +301,7 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+        com.radolyn.ayugram.proxy.AyuSmartProxyController.init();
 
         ApplicationLoader app = (ApplicationLoader) ApplicationLoader.applicationContext;
         app.initFirebase();

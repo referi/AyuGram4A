@@ -522,7 +522,7 @@ public class ConnectionsManager extends BaseController {
         String proxySecret = preferences.getString("proxy_secret", "");
         int proxyPort = preferences.getInt("proxy_port", 1080);
 
-        if (preferences.getBoolean("proxy_enabled", false) && !TextUtils.isEmpty(proxyAddress)) {
+        if (preferences.getBoolean("proxy_enabled", false) && !TextUtils.isEmpty(proxyAddress) && !com.radolyn.ayugram.proxy.AyuSmartProxyController.shouldBypassAtStart()) {
             native_setProxySettings(currentAccount, proxyAddress, proxyPort, proxyUsername, proxyPassword, proxySecret);
         }
         String installer = "";

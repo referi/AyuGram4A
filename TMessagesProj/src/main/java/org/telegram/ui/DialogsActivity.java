@@ -8363,7 +8363,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 proxyItem.setVisibility(View.VISIBLE);
             }
             proxyItemVisible = true;
-            proxyDrawable.setConnected(proxyEnabled, currentConnectionState == ConnectionsManager.ConnectionStateConnected || currentConnectionState == ConnectionsManager.ConnectionStateUpdating, animated);
+            boolean effectivelyEnabled = proxyEnabled && !com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing();
+            proxyDrawable.setConnected(effectivelyEnabled, effectivelyEnabled && (currentConnectionState == ConnectionsManager.ConnectionStateConnected || currentConnectionState == ConnectionsManager.ConnectionStateUpdating), animated);
         } else {
             proxyItemVisible = false;
             proxyItem.setVisibility(View.GONE);

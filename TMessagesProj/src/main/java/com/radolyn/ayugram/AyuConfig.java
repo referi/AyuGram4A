@@ -54,6 +54,10 @@ public class AyuConfig {
     public static boolean useSecureConnection;
     public static boolean WALMode;
 
+    public static boolean smartProxyVpn;
+    public static boolean smartProxyWifi;
+    public static String smartProxySsids;
+
     private static boolean configLoaded;
 
     static {
@@ -118,8 +122,53 @@ public class AyuConfig {
             // ~ Debug
             WALMode = preferences.getBoolean("walMode", true);
 
+            // ~ Smart Proxy
+            smartProxyVpn = preferences.getBoolean("smartProxyVpn", false);
+            smartProxyWifi = preferences.getBoolean("smartProxyWifi", false);
+            smartProxySsids = preferences.getString("smartProxySsids", "");
+
             configLoaded = true;
         }
+    }
+
+    public static java.util.List<String> getSmartProxySsidsList() {
+        java.util.List<String> list = new ArrayList<>();
+        if (smartProxySsids != null && !smartProxySsids.trim().isEmpty()) {
+            String[] parts = smartProxySsids.split(",");
+            for (String p : parts) {
+                String trimmed = p.trim();
+                if (!trimmed.isEmpty()) {
+                    list.add(trimmed);
+                }
+            }
+        }
+        return list;
+    }
+
+    public static String getSmartProxySsidsSummary() {
+        java.util.List<String> list = getSmartProxySsidsList();
+        if (list.isEmpty()) {
+            return "";
+        }
+        return String.join(", ", list);
+    }
+
+    public static void setSmartProxyVpn(boolean enabled) {
+        smartProxyVpn = enabled;
+        editor.putBoolean("smartProxyVpn", enabled).apply();
+        com.radolyn.ayugram.proxy.AyuSmartProxyController.checkProxyState();
+    }
+
+    public static void setSmartProxyWifi(boolean enabled) {
+        smartProxyWifi = enabled;
+        editor.putBoolean("smartProxyWifi", enabled).apply();
+        com.radolyn.ayugram.proxy.AyuSmartProxyController.checkProxyState();
+    }
+
+    public static void setSmartProxySsids(String ssids) {
+        smartProxySsids = ssids == null ? "" : ssids.trim();
+        editor.putString("smartProxySsids", smartProxySsids).apply();
+        com.radolyn.ayugram.proxy.AyuSmartProxyController.checkProxyState();
     }
 
     public static boolean isGhostModeActive() {

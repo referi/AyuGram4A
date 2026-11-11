@@ -99,6 +99,12 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
     private int callsDetailRow;
     private int deleteAllRow;
 
+    private int smartProxyHeaderRow;
+    private int smartProxyVpnRow;
+    private int smartProxyWifiRow;
+    private int smartProxyWifiSsidsRow;
+    private int smartProxyShadowRow;
+
     private ItemTouchHelper itemTouchHelper;
     private NumberTextView selectedCountTextView;
     private ActionBarMenuItem shareMenuItem;
@@ -176,7 +182,11 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         public void updateStatus() {
             int colorKey;
             if (SharedConfig.currentProxy == currentInfo && useProxySettings) {
-                if (currentConnectionState == ConnectionsManager.ConnectionStateConnected || currentConnectionState == ConnectionsManager.ConnectionStateUpdating) {
+                if (com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing()) {
+                    colorKey = Theme.key_windowBackgroundWhiteGrayText2;
+                    String reason = com.radolyn.ayugram.proxy.AyuSmartProxyController.getBypassReason();
+                    valueTextView.setText(LocaleController.formatString("SmartProxyStatusBypassed", R.string.SmartProxyStatusBypassed, reason != null ? reason : ""));
+                } else if (currentConnectionState == ConnectionsManager.ConnectionStateConnected || currentConnectionState == ConnectionsManager.ConnectionStateUpdating) {
                     colorKey = Theme.key_windowBackgroundWhiteBlueText6;
                     if (currentInfo.ping != 0) {
                         valueTextView.setText(LocaleController.getString("Connected", R.string.Connected) + ", " + LocaleController.formatString("Ping", R.string.Ping, currentInfo.ping));
@@ -431,7 +441,10 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                 editor.putBoolean("proxy_enabled", useProxySettings);
                 editor.apply();
 
-                ConnectionsManager.setProxySettings(useProxySettings, SharedConfig.currentProxy.address, SharedConfig.currentProxy.port, SharedConfig.currentProxy.username, SharedConfig.currentProxy.password, SharedConfig.currentProxy.secret);
+                com.radolyn.ayugram.proxy.AyuSmartProxyController.checkProxyState();
+                if (!com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing()) {
+                    ConnectionsManager.setProxySettings(useProxySettings, SharedConfig.currentProxy.address, SharedConfig.currentProxy.port, SharedConfig.currentProxy.username, SharedConfig.currentProxy.password, SharedConfig.currentProxy.secret);
+                }
                 NotificationCenter.getGlobalInstance().removeObserver(ProxyListActivity.this, NotificationCenter.proxySettingsChanged);
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
                 NotificationCenter.getGlobalInstance().addObserver(ProxyListActivity.this, NotificationCenter.proxySettingsChanged);
@@ -443,6 +456,25 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                         cell.updateStatus();
                     }
                 }
+            } else if (position == smartProxyVpnRow) {
+                com.radolyn.ayugram.AyuConfig.setSmartProxyVpn(!com.radolyn.ayugram.AyuConfig.smartProxyVpn);
+                TextCheckCell textCheckCell = (TextCheckCell) view;
+                textCheckCell.setChecked(com.radolyn.ayugram.AyuConfig.smartProxyVpn);
+                updateRows(true);
+            } else if (position == smartProxyWifiRow) {
+                boolean newState = !com.radolyn.ayugram.AyuConfig.smartProxyWifi;
+                if (newState && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && !com.radolyn.ayugram.proxy.AyuSmartProxyController.hasLocationPermission()) {
+                    try {
+                        getParentActivity().requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+                    } catch (Throwable ignore) {
+                    }
+                }
+                com.radolyn.ayugram.AyuConfig.setSmartProxyWifi(newState);
+                TextCheckCell textCheckCell = (TextCheckCell) view;
+                textCheckCell.setChecked(newState);
+                updateRows(true);
+            } else if (position == smartProxyWifiSsidsRow) {
+                showSmartProxySsidsDialog();
             } else if (position == rotationRow) {
                 SharedConfig.proxyRotationEnabled = !SharedConfig.proxyRotationEnabled;
                 TextCheckCell textCheckCell = (TextCheckCell) view;
@@ -643,6 +675,17 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         } else {
             useProxyShadowRow = -1;
         }
+
+        smartProxyHeaderRow = rowCount++;
+        smartProxyVpnRow = rowCount++;
+        smartProxyWifiRow = rowCount++;
+        if (com.radolyn.ayugram.AyuConfig.smartProxyWifi) {
+            smartProxyWifiSsidsRow = rowCount++;
+        } else {
+            smartProxyWifiSsidsRow = -1;
+        }
+        smartProxyShadowRow = rowCount++;
+
         connectionsHeaderRow = rowCount++;
 
         if (notify) {
@@ -895,6 +938,9 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     } else if (position == deleteAllRow) {
                         textCell.setTextColor(Theme.getColor(Theme.key_text_RedRegular));
                         textCell.setText(LocaleController.getString(R.string.DeleteAllProxies), false);
+                    } else if (position == smartProxyWifiSsidsRow) {
+                        String summary = com.radolyn.ayugram.AyuConfig.getSmartProxySsidsSummary();
+                        textCell.setTextAndValue(LocaleController.getString("SmartProxyWifiSsids", R.string.SmartProxyWifiSsids), TextUtils.isEmpty(summary) ? LocaleController.getString("SmartProxyWifiNotSet", R.string.SmartProxyWifiNotSet) : summary, false);
                     }
                     break;
                 }
@@ -902,6 +948,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
                     if (position == connectionsHeaderRow) {
                         headerCell.setText(LocaleController.getString("ProxyConnections", R.string.ProxyConnections));
+                    } else if (position == smartProxyHeaderRow) {
+                        headerCell.setText(LocaleController.getString("SmartProxyHeader", R.string.SmartProxyHeader));
                     }
                     break;
                 }
@@ -913,6 +961,10 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                         checkCell.setTextAndCheck(LocaleController.getString("UseProxyForCalls", R.string.UseProxyForCalls), useProxyForCalls, false);
                     } else if (position == rotationRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.UseProxyRotation), SharedConfig.proxyRotationEnabled, true);
+                    } else if (position == smartProxyVpnRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString("SmartProxyVpn", R.string.SmartProxyVpn), com.radolyn.ayugram.AyuConfig.smartProxyVpn, true);
+                    } else if (position == smartProxyWifiRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString("SmartProxyWifi", R.string.SmartProxyWifi), com.radolyn.ayugram.AyuConfig.smartProxyWifi, com.radolyn.ayugram.AyuConfig.smartProxyWifi);
                     }
                     break;
                 }
@@ -923,6 +975,15 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                         cell.setBackground(Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
                     } else if (position == rotationTimeoutInfoRow) {
                         cell.setText(LocaleController.getString(R.string.ProxyRotationTimeoutInfo));
+                        cell.setBackground(Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
+                    } else if (position == smartProxyShadowRow) {
+                        String info = LocaleController.getString("SmartProxyInfo", R.string.SmartProxyInfo);
+                        if (com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing()) {
+                            info += "\n\n" + LocaleController.formatString("SmartProxyStatusBypassed", R.string.SmartProxyStatusBypassed, com.radolyn.ayugram.proxy.AyuSmartProxyController.getBypassReason());
+                        } else if (useProxySettings) {
+                            info += "\n\n" + LocaleController.getString("SmartProxyStatusActive", R.string.SmartProxyStatusActive);
+                        }
+                        cell.setText(info);
                         cell.setBackground(Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
                     }
                     break;
@@ -974,6 +1035,10 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     checkCell.setChecked(useProxyForCalls);
                 } else if (position == rotationRow) {
                     checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                } else if (position == smartProxyVpnRow) {
+                    checkCell.setChecked(com.radolyn.ayugram.AyuConfig.smartProxyVpn);
+                } else if (position == smartProxyWifiRow) {
+                    checkCell.setChecked(com.radolyn.ayugram.AyuConfig.smartProxyWifi);
                 }
             } else {
                 super.onBindViewHolder(holder, position, payloads);
@@ -992,6 +1057,10 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     checkCell.setChecked(useProxyForCalls);
                 } else if (position == rotationRow) {
                     checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                } else if (position == smartProxyVpnRow) {
+                    checkCell.setChecked(com.radolyn.ayugram.AyuConfig.smartProxyVpn);
+                } else if (position == smartProxyWifiRow) {
+                    checkCell.setChecked(com.radolyn.ayugram.AyuConfig.smartProxyWifi);
                 }
             }
         }
@@ -999,7 +1068,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
-            return position == useProxyRow || position == rotationRow || position == callsRow || position == proxyAddRow || position == deleteAllRow || position >= proxyStartRow && position < proxyEndRow;
+            return position == useProxyRow || position == rotationRow || position == callsRow || position == proxyAddRow || position == deleteAllRow || (position >= proxyStartRow && position < proxyEndRow) || position == smartProxyVpnRow || position == smartProxyWifiRow || position == smartProxyWifiSsidsRow;
         }
 
         @Override
@@ -1073,11 +1142,11 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         public int getItemViewType(int position) {
             if (position == useProxyShadowRow || position == proxyShadowRow) {
                 return VIEW_TYPE_SHADOW;
-            } else if (position == proxyAddRow || position == deleteAllRow) {
+            } else if (position == proxyAddRow || position == deleteAllRow || position == smartProxyWifiSsidsRow) {
                 return VIEW_TYPE_TEXT_SETTING;
-            } else if (position == useProxyRow || position == rotationRow || position == callsRow) {
+            } else if (position == useProxyRow || position == rotationRow || position == callsRow || position == smartProxyVpnRow || position == smartProxyWifiRow) {
                 return VIEW_TYPE_TEXT_CHECK;
-            } else if (position == connectionsHeaderRow) {
+            } else if (position == connectionsHeaderRow || position == smartProxyHeaderRow) {
                 return VIEW_TYPE_HEADER;
             } else if (position == rotationTimeoutRow) {
                 return VIEW_TYPE_SLIDE_CHOOSER;
@@ -1129,5 +1198,79 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{TextInfoPrivacyCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayText4));
 
         return themeDescriptions;
+    }
+
+    private void showSmartProxySsidsDialog() {
+        if (getParentActivity() == null) {
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(LocaleController.getString("SmartProxyWifiSsids", R.string.SmartProxyWifiSsids));
+        builder.setMessage(LocaleController.getString("SmartProxyWifiSsidsHint", R.string.SmartProxyWifiSsidsHint));
+
+        android.widget.LinearLayout linearLayout = new android.widget.LinearLayout(getParentActivity());
+        linearLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        linearLayout.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(8), AndroidUtilities.dp(24), 0);
+
+        org.telegram.ui.Components.EditTextBoldCursor editText = new org.telegram.ui.Components.EditTextBoldCursor(getParentActivity());
+        editText.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 16);
+        editText.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+        editText.setHintColor(Theme.getColor(Theme.key_dialogTextHint));
+        editText.setCursorColor(Theme.getColor(Theme.key_dialogTextBlack));
+        editText.setCursorSize(AndroidUtilities.dp(20));
+        editText.setCursorWidth(1.5f);
+        editText.setBackgroundDrawable(Theme.createEditTextActionModeBackground(getParentActivity()));
+        editText.setPadding(0, AndroidUtilities.dp(4), 0, AndroidUtilities.dp(4));
+        editText.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        editText.setText(com.radolyn.ayugram.AyuConfig.smartProxySsids != null ? com.radolyn.ayugram.AyuConfig.smartProxySsids : "");
+        if (editText.getText().length() > 0) {
+            editText.setSelection(editText.getText().length());
+        }
+        linearLayout.addView(editText, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        String currentSsid = com.radolyn.ayugram.proxy.AyuSmartProxyController.getCurrentWifiSsid();
+        if (!android.text.TextUtils.isEmpty(currentSsid)) {
+            android.widget.TextView currentSsidView = new android.widget.TextView(getParentActivity());
+            currentSsidView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 13);
+            currentSsidView.setTextColor(Theme.getColor(Theme.key_dialogTextBlue2));
+            currentSsidView.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(4));
+            currentSsidView.setText(LocaleController.formatString("SmartProxyWifiAddCurrent", R.string.SmartProxyWifiAddCurrent, currentSsid));
+            currentSsidView.setOnClickListener(v -> {
+                String text = editText.getText().toString().trim();
+                if (text.isEmpty()) {
+                    editText.setText(currentSsid);
+                } else {
+                    String[] parts = text.split(",");
+                    boolean alreadyExists = false;
+                    for (String p : parts) {
+                        if (p.trim().equalsIgnoreCase(currentSsid)) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyExists) {
+                        editText.setText(text + ", " + currentSsid);
+                    }
+                }
+                editText.setSelection(editText.getText().length());
+            });
+            linearLayout.addView(currentSsidView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        }
+
+        builder.setView(linearLayout);
+        builder.setPositiveButton(LocaleController.getString("Save", R.string.Save), (dialog, which) -> {
+            com.radolyn.ayugram.AyuConfig.setSmartProxySsids(editText.getText().toString());
+            updateRows(true);
+        });
+        builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
+        builder.show();
+    }
+
+    @Override
+    public void onRequestPermissionsResultFragment(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 1001) {
+            updateRows(true);
+        }
     }
 }

@@ -102,7 +102,7 @@ public class ProxyRotationController implements NotificationCenter.NotificationC
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.proxyCheckDone) {
-            if (!SharedConfig.isProxyEnabled() || !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1 || !isCurrentlyChecking) {
+            if (!SharedConfig.isProxyEnabled() || com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing() || !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1 || !isCurrentlyChecking) {
                 return;
             }
 
@@ -110,7 +110,7 @@ public class ProxyRotationController implements NotificationCenter.NotificationC
         } else if (id == NotificationCenter.proxySettingsChanged) {
             AndroidUtilities.cancelRunOnUIThread(checkProxyAndSwitchRunnable);
         } else if (id == NotificationCenter.didUpdateConnectionState && account == UserConfig.selectedAccount) {
-            if (!SharedConfig.isProxyEnabled() && !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1) {
+            if ((!SharedConfig.isProxyEnabled() || com.radolyn.ayugram.proxy.AyuSmartProxyController.isBypassing()) && !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1) {
                 return;
             }
 

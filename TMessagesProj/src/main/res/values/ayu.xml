@@ -103,4 +103,17 @@
   <string name="SecretMessageTecno">Tecno phones are the best.</string>
   <string name="SecretMessageXiaomiSuccess">You\'re using a good phone.</string>
   <string name="SecretMessageXiaomiFailure">Install custom ROM.</string>
+
+  <string name="SmartProxyHeader">Smart Proxy</string>
+  <string name="SmartProxyVpn">Disable when VPN is active</string>
+  <string name="SmartProxyWifi">Disable on trusted Wi-Fi</string>
+  <string name="SmartProxyWifiSsids">Trusted Wi-Fi networks</string>
+  <string name="SmartProxyWifiNotSet">Not configured</string>
+  <string name="SmartProxyWifiSsidsHint">Enter Wi-Fi network names (SSID) separated by comma.</string>
+  <string name="SmartProxyWifiAddCurrent">+ Add current network (%1$s)</string>
+  <string name="SmartProxyInfo">Smart Proxy automatically disables Telegram proxy connection when you are connected to trusted Wi-Fi networks or when a system-wide VPN is active.</string>
+  <string name="SmartProxyStatusActive">Status: Proxy is active</string>
+  <string name="SmartProxyStatusBypassed">Status: Paused (%1$s)</string>
+  <string name="SmartProxyBypassedVpn">VPN is active</string>
+  <string name="SmartProxyBypassedWifi">Wi-Fi: %1$s</string>
 </resources>
