@@ -14,7 +14,8 @@ jobs:
       CCACHE_MAXSIZE: "10G"
       CCACHE_HARDLINK: "true"
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -41,10 +42,7 @@ jobs:
           key: ccache
           restore-keys: ccache
 
-      - name: Setup Android SDK Tools
-        uses: android-actions/setup-android@v2
-
-      - name: Prepare Environment and Dependencies
+      - name: Free disk space & install Linux tools
         run: |
           echo "Freeing disk space on runner"
           sudo rm -rf /usr/share/dotnet/
@@ -57,6 +55,13 @@ jobs:
           
           sudo apt-get update
           sudo apt-get install -y bison gcc make curl ninja-build ccache
+
+      - name: Setup Android NDK and CMake
+        run: |
+          echo "Accepting Android licenses"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          echo "Installing required NDK and CMake"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;21.4.7075529" "cmake;3.10.2.4988404"
 
       - name: Configure API keys and Keystore
         run: |
@@ -78,7 +83,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleAfatRelease --stacktrace
+        run: ./gradlew assembleAfatRelease --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
