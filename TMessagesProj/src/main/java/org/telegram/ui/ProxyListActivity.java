@@ -1220,7 +1220,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         editText.setCursorColor(Theme.getColor(Theme.key_dialogTextBlack));
         editText.setCursorSize(AndroidUtilities.dp(20));
         editText.setCursorWidth(1.5f);
-        editText.setBackgroundDrawable(Theme.createEditTextActionModeBackground(getParentActivity()));
+        editText.setBackgroundDrawable(Theme.createEditTextDrawable(getParentActivity(), true));
         editText.setPadding(0, AndroidUtilities.dp(4), 0, AndroidUtilities.dp(4));
         editText.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         editText.setText(com.radolyn.ayugram.AyuConfig.smartProxySsids != null ? com.radolyn.ayugram.AyuConfig.smartProxySsids : "");

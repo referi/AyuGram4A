@@ -36,12 +36,6 @@ jobs:
           restore-keys: |
             gradle-builds
 
-      - name: Set up ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ccache
-          restore-keys: ccache
-
       - name: Free disk space & install Linux tools
         run: |
           echo "Freeing disk space on runner"
@@ -55,6 +49,13 @@ jobs:
           
           sudo apt-get update
           sudo apt-get install -y bison gcc make curl ninja-build ccache
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        continue-on-error: true
+        with:
+          key: ccache
+          restore-keys: ccache
 
       - name: Setup Android NDK and CMake
         run: |
