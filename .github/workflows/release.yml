@@ -76,8 +76,9 @@ jobs:
           SIGNING_KEY_STORE_PASSWORD = password
           EOF
           
-          # Generate signing keystore if needed
-          keytool -genkey -v -keystore TMessagesProj/config/extera.jks -alias alias -keyalg RSA -keysize 2048 -validity 10000 -storepass password -keypass password -dname "CN=AyuGram, OU=Fork, O=Fork, L=Fork, S=Fork, C=US" || true
+          # Delete pre-existing proprietary keystore with unknown password and generate a fresh one matching API_KEYS
+          rm -f TMessagesProj/config/extera.jks
+          keytool -genkey -v -keystore TMessagesProj/config/extera.jks -alias alias -keyalg RSA -keysize 2048 -validity 10000 -storepass password -keypass password -dname "CN=AyuGram, OU=Fork, O=Fork, L=Fork, S=Fork, C=US"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -86,7 +87,18 @@ jobs:
         run: ./gradlew assembleAfatRelease --no-daemon --stacktrace
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: AyuGram-Release-APK
           path: TMessagesProj/build/outputs/apk/afat/release/*.apk
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-failure-reports
+          path: |
+            TMessagesProj/build/reports/
+            TMessagesProj/build/intermediates/cxx/
+            **/hs_err_pid*.log
