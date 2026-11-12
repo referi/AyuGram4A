@@ -9,8 +9,8 @@
 
 package com.radolyn.ayugram.proprietary;
 
-import android.util.LongSparseArray;
 import android.util.Pair;
+import android.util.SparseArray;
 import org.telegram.messenger.MessageObject;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class AyuHistoryHook {
         return new Pair<>(min, max);
     }
 
-    public static void doHook(int currentAccount, ArrayList<MessageObject> messArr, LongSparseArray<MessageObject> messagesDict, int startId, int endId, long dialogId, int limit, int topicId, boolean isSecretChat) {
+    public static void doHook(int currentAccount, ArrayList<MessageObject> messArr, SparseArray<MessageObject> messagesDict, int startId, int endId, long dialogId, int limit, int topicId, boolean isSecretChat) {
         // AyuHistoryHook implementation hook
     }
 }
